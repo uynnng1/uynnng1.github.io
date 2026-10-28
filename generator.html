@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>숫자 조합 생성기 | UtilBox</title>
+<meta name="description" content="숫자 범위와 추출 개수, 중복 허용 여부를 지정하여 무작위 숫자 조합을 생성하고 경우의 수를 계산합니다.">
+<style>
+:root{--ink:#172033;--muted:#64748b;--line:#dbe3ee;--blue:#2563eb;--blue-hover:#1d4ed8;--blue-bg:#dbeafe;--bg:#f3f6fb}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:Pretendard,"Malgun Gothic",sans-serif}.wrap{max-width:1000px;margin:auto;padding:0 18px}.header{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;padding:18px 0}.brand{font-size:19px;font-weight:850;color:var(--ink);text-decoration:none;display:flex;align-items:center;gap:9px}.mark{display:inline-flex;width:36px;height:36px;align-items:center;justify-content:center;border-radius:11px;background:var(--blue);color:white}.nav{display:flex;gap:8px;flex-wrap:wrap}.nav a{color:#475569;text-decoration:none;padding:9px 12px;border-radius:9px;font-size:14px;font-weight:700}.nav a.active,.nav a:hover{background:var(--blue-bg);color:var(--blue-hover)}.container{background:#fff;border:1px solid var(--line);border-radius:24px;padding:clamp(20px,5vw,36px);margin:20px 0 28px;box-shadow:0 10px 30px -5px rgba(15,23,42,.04)}h1{font-size:clamp(24px,4vw,32px);margin:0 0 8px;letter-spacing:-.02em}.subtitle{color:var(--muted);font-size:15px;line-height:1.6;margin:0 0 28px}.settings{display:grid;grid-template-columns:1fr;gap:18px}.field{padding:18px;border:1px solid var(--line);border-radius:16px;background:#fbfcfd}.field-title{display:block;margin-bottom:8px;font-weight:700;font-size:14px;color:var(--ink)}.range-box{display:flex;gap:10px;align-items:center}.range-box span{color:var(--muted);font-weight:600}input[type="number"],input[type="text"],select{width:100%;padding:11px 13px;border:1px solid var(--line);border-radius:10px;font-size:15px;background:#fff;color:var(--ink);outline:none;transition:border-color .2s}input[type="number"]:focus,input[type="text"]:focus,select:focus{border-color:var(--blue)}.hint{margin-top:6px;color:var(--muted);font-size:12.5px;line-height:1.4}.checkbox-label{display:inline-flex;align-items:center;gap:8px;font-size:14px;font-weight:600;cursor:pointer}.actions{margin-top:24px}button{border:0;border-radius:12px;padding:14px 20px;font-size:16px;font-weight:700;cursor:pointer;width:100%;transition:all .2s}.primary{color:#fff;background:var(--blue);box-shadow:0 4px 14px rgba(37,99,235,.3)}.primary:hover{background:var(--blue-hover);transform:translateY(-1px)}.result-panel{margin-top:28px;padding:20px;background:#f8fafc;border:1px solid var(--line);border-radius:16px}.result-head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid var(--line)}.result-head h2{margin:0;font-size:16px;font-weight:700}#status{color:var(--blue);font-size:13px;font-weight:700;background:var(--blue-bg);padding:4px 10px;border-radius:20px}.result-list{display:grid;gap:8px;max-height:400px;overflow-y:auto}.result-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:10px 14px;background:#fff;border:1px solid var(--line);border-radius:10px}.number{display:inline-flex;align-items:center;justify-content:center;min-width:32px;height:32px;padding:0 6px;border-radius:8px;color:var(--blue);background:var(--blue-bg);font-weight:800;font-size:13.5px}.empty{color:var(--muted);text-align:center;padding:20px 0;font-size:14px}.footer{padding:24px 0 34px;text-align:center;color:var(--muted);font-size:12px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="header">
+    <a class="brand" href="index.html"><span class="mark">U</span><span>UtilBox</span></a>
+    <nav class="nav" aria-label="주 메뉴">
+      <a href="index.html">홈</a>
+      <a class="active" href="generator.html">숫자 조합 생성기</a>
+      <a href="lotto.html">로또 무작위 조합기</a>
+    </nav>
+  </header>
+
+  <main class="container">
+    <h1>🔢 무작위 숫자 조합 생성기</h1>
+    <p class="subtitle">설정한 범위와 조건에 맞춰 난수 번호 조합을 무작위로 생성합니다.</p>
+
+    <div class="settings">
+      <div class="field">
+        <label class="field-title">숫자 범위 지정</label>
+        <div class="range-box">
+          <input id="num-min" type="number" value="1" placeholder="최솟값">
+          <span>~</span>
+          <input id="num-max" type="number" value="45" placeholder="최댓값">
+        </div>
+        <div class="hint">생성할 숫자의 시작값과 끝값을 설정합니다.</div>
+      </div>
+
+      <div class="field">
+        <label for="num-count" class="field-title">추출할 숫자 개수</label>
+        <input id="num-count" type="number" value="6" min="1">
+        <div class="hint">한 세트당 뽑을 숫자 개수를 지정합니다.</div>
+      </div>
+
+      <div class="field">
+        <label for="set-count" class="field-title">생성할 세트 수</label>
+        <input id="set-count" type="number" value="5" min="1" max="100">
+        <div class="hint">동시에 생성할 조합 세트 개수입니다. (최대 100개)</div>
+      </div>
+
+      <div class="field">
+        <label class="checkbox-label">
+          <input id="allow-dup" type="checkbox">
+          중복 숫자 허용
+        </label>
+        <div class="hint">체크 해제 시 한 세트 내에서 동일한 숫자가 나오지 않습니다.</div>
+      </div>
+
+      <div class="field">
+        <label for="exclude-input" class="field-title">제외할 숫자</label>
+        <input id="exclude-input" type="text" placeholder="예: 3, 7, 12">
+        <div class="hint">쉼표(,)로 구분하여 생성에서 제외할 숫자를 입력합니다.</div>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button class="primary" id="btn-generate">숫자 조합 생성하기</button>
+    </div>
+
+    <div class="result-panel">
+      <div class="result-head">
+        <h2>생성 결과</h2>
+        <span id="status">대기 중</span>
+      </div>
+      <div id="results" class="result-list">
+        <div class="empty">상단의 생성 버튼을 누르면 조합 결과가 표시됩니다.</div>
+      </div>
+    </div>
+  </main>
+  <footer class="footer">UtilBox · 간편한 온라인 도구 모음</footer>
+</div>
+
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+
+  function generate() {
+    const min = Number($('num-min').value);
+    const max = Number($('num-max').value);
+    const count = Number($('num-count').value);
+    const setCnt = Number($('set-count').value);
+    const allowDup = $('allow-dup').checked;
+    const excludeStr = $('exclude-input').value;
+
+    if (![min, max, count, setCnt].every(Number.isSafeInteger)) {
+      alert('범위, 개수, 세트 수는 정수로 입력해 주세요.'); return;
+    }
+    if (min > max) { alert('최솟값이 최댓값보다 클 수 없습니다.'); return; }
+    if (count < 1 || setCnt < 1) { alert('개수 및 세트 수는 1 이상이어야 합니다.'); return; }
+
+    const excluded = new Set();
+    if (excludeStr.trim() !== '') {
+      excludeStr.split(',').forEach(v => {
+        const n = Number(v.trim());
+        if (!isNaN(n)) excluded.add(n);
+      });
+    }
+
+    const pool = [];
+    for (let i = min; i <= max; i++) {
+      if (!excluded.has(i)) pool.push(i);
+    }
+
+    if (!allowDup && pool.length < count) {
+      alert(`중복 없이 뽑을 수 있는 숫자(${pool.length}개)가 요청한 개수(${count}개)보다 적습니다.`);
+      return;
+    }
+
+    const resultsDiv = $('results');
+    resultsDiv.replaceChildren();
+
+    for (let s = 0; s < setCnt; s++) {
+      const row = document.createElement('div');
+      row.className = 'result-row';
+
+      const label = document.createElement('span');
+      label.style.cssText = 'font-size:12px; font-weight:700; color:var(--muted); min-width:36px;';
+      label.textContent = `#${s + 1}`;
+      row.appendChild(label);
+
+      let picked = [];
+      if (allowDup) {
+        for (let c = 0; c < count; c++) {
+          const rand = pool[Math.floor(Math.random() * pool.length)];
+          picked.push(rand);
+        }
+      } else {
+        const tempPool = [...pool];
+        for (let c = 0; c < count; c++) {
+          const idx = Math.floor(Math.random() * tempPool.length);
+          picked.push(tempPool.splice(idx, 1)[0]);
+        }
+        picked.sort((a, b) => a - b);
+      }
+
+      picked.forEach(n => {
+        const badge = document.createElement('span');
+        badge.className = 'number';
+        badge.textContent = n;
+        row.appendChild(badge);
+      });
+
+      resultsDiv.appendChild(row);
+    }
+
+    $('status').textContent = `${setCnt}개 세트 생성 완료`;
+  }
+
+  $('btn-generate').addEventListener('click', generate);
+})();
+</script>
+</body>
+</html>
