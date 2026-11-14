@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>사소·단단 | 선물거래 시뮬레이터</title>
+  <style>
+    :root {
+      --bg-color: #fcfcfb;
+      --card-bg: rgba(255, 255, 255, 0.95);
+      --text-main: #2b2b2b;
+      --text-sub: #666666;
+      --border-color: #e2e2dc;
+      --accent-green: #2e7d32;
+      --accent-red: #c62828;
+      --accent-blue: #1565c0;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Pretendard", sans-serif;
+    }
+
+    body {
+      background-color: var(--bg-color);
+      background-image: radial-gradient(#e2e2dc 0.75px, transparent 0.75px);
+      background-size: 14px 14px;
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px 16px;
+    }
+
+    .top-nav {
+      width: 100%;
+      max-width: 1200px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 12px;
+    }
+
+    .brand-area {
+      display: flex;
+      align-items: baseline;
+      gap: 12px;
+    }
+
+    .brand {
+      font-size: 1.15rem;
+      font-weight: 700;
+      text-decoration: none;
+      color: var(--text-main);
+    }
+
+    .main-container {
+      width: 100%;
+      max-width: 1200px;
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 24px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.02);
+    }
+
+    .header-section {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+      gap: 16px;
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 16px;
+    }
+
+    .title-box h1 {
+      font-size: 1.2rem;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .title-box p {
+      font-size: 0.8rem;
+      color: var(--text-sub);
+    }
+
+    .compact-simulator-box {
+      background: #f7f7f4;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 10px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      min-width: 360px;
+    }
+
+    .sim-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.82rem;
+    }
+
+    .sim-row input[type="number"] {
+      width: 110px;
+      padding: 3px 6px;
+      font-size: 0.85rem;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      text-align: right;
+    }
+
+    .range-slider {
+      width: 100%;
+      appearance: none;
+      height: 6px;
+      background: linear-gradient(to right, #c62828, #fbc02d, #2e7d32);
+      border-radius: 3px;
+      outline: none;
+      margin: 4px 0;
+    }
+
+    .range-slider::-webkit-slider-thumb {
+      appearance: none;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: #333;
+      cursor: pointer;
+      border: 2px solid #fff;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+    }
+
+    .table-responsive {
+      overflow-x: auto;
+      margin-bottom: 20px;
+    }
+
+    .exchange-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.85rem;
+      white-space: nowrap;
+    }
+
+    .exchange-table th {
+      background-color: #f4f4f0;
+      color: var(--text-sub);
+      font-weight: 600;
+      padding: 10px 8px;
+      border-bottom: 1px solid var(--border-color);
+      text-align: left;
+    }
+
+    .exchange-table td {
+      padding: 10px 8px;
+      border-bottom: 1px solid var(--border-color);
+      vertical-align: middle;
+    }
+
+    .exchange-table input[type="text"],
+    .exchange-table input[type="number"],
+    .exchange-table select {
+      width: 85px;
+      padding: 5px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 0.85rem;
+      background: #fff;
+      text-align: right;
+    }
+
+    .text-green { color: var(--accent-green); font-weight: 600; }
+    .text-red { color: var(--accent-red); font-weight: 600; }
+
+    .add-btn {
+      background: #333;
+      color: #fff;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 4px;
+      font-size: 0.8rem;
+      cursor: pointer;
+    }
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 12px;
+      background: #f7f7f4;
+      padding: 14px;
+      border-radius: 8px;
+      border: 1px solid var(--border-color);
+    }
+
+    .summary-item {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .summary-item .label {
+      font-size: 0.78rem;
+      color: var(--text-sub);
+    }
+
+    .summary-item .val {
+      font-size: 1.05rem;
+      font-weight: 700;
+    }
+
+    footer {
+      margin-top: 20px;
+      font-size: 0.78rem;
+      color: #aaa;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+
+  <header class="top-nav">
+    <div class="brand-area">
+      <a href="#" class="brand">UtilBox</a>
+      <span style="font-size: 0.95rem; font-weight: 600; color: var(--text-sub);">사소·단단 선물거래 시뮬레이터</span>
+    </div>
+  </header>
+
+  <main class="main-container">
+    <div class="header-section">
+      <div class="title-box">
+        <h1>가정 시뮬레이션: 내 포지션을 입력하고 예측하세요</h1>
+        <p>배율과 투자금을 설정하고 슬라이더를 움직여 가격 변동에 따른 청산가와 잔고 변화를 확인하세요.</p>
+      </div>
+
+      <!-- 자본금 및 좌우 드래그 슬라이더 박스 -->
+      <div class="compact-simulator-box">
+        <div class="sim-row">
+          <span>실제 총자본금:</span>
+          <input type="number" id="realTotalCap" value="10000000" oninput="calculateAll()">
+        </div>
+        <div class="sim-row">
+          <span>가격/손익 변동폭 (슬라이더):</span>
+          <span id="sliderValDisplay" style="font-weight: 600; color: var(--accent-blue);">0% (현재가)</span>
+        </div>
+        <!-- 좌우 드래그 슬라이더 (-50% ~ +50% 가격 변동 가정) -->
+        <input type="range" id="marketSlider" class="range-slider" min="-50" max="50" value="0" step="1" oninput="calculateAll()">
+        <div class="sim-row" style="border-top: 1px solid #ddd; padding-top: 4px; margin-top: 2px;">
+          <span style="color: var(--text-sub);">남은 유동금액 (증거금):</span>
+          <span id="remainMarginReserve" style="font-weight: 700;">₩10,000,000</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 포지션 리스트 테이블 -->
+    <div class="table-responsive">
+      <table class="exchange-table">
+        <thead>
+          <tr>
+            <th>Symbol</th>
+            <th>포지션</th>
+            <th>배율</th>
+            <th>투자금 (USDT)</th>
+            <th>진입 가격</th>
+            <th>가상 Mark Price</th>
+            <th>Est. Liq. Price (청산가)</th>
+            <th>Floating PnL</th>
+            <th>관리</th>
+          </tr>
+        </thead>
+        <tbody id="positionTableBody">
+          <tr>
+            <td><b>TRUMPUSDT</b></td>
+            <td>
+              <select onchange="calculateAll()">
+                <option value="long">Long (롱)</option>
+                <option value="short">Short (숏)</option>
+              </select>
+            </td>
+            <td><input type="number" class="lev-input" value="50" min="1" max="125" oninput="calculateAll()">x</td>
+            <td><input type="number" class="margin-input" value="100" min="1" oninput="calculateAll()"></td>
+            <td><input type="number" class="entry-input" value="1.075" step="0.001" oninput="calculateAll()"></td>
+            <td><span class="mark-price-disp">1.075</span></td>
+            <td><span class="liq-price-disp text-red" style="font-weight:600;">-</span></td>
+            <td><span class="pnl-disp">0.00 USDT (0.0%)</span></td>
+            <td><button class="add-btn" onclick="removeRow(this)">삭제</button></td>
+          </tr>
+          <tr>
+            <td><b>SUIUSDT</b></td>
+            <td>
+              <select onchange="calculateAll()">
+                <option value="long">Long (롱)</option>
+                <option value="short">Short (숏)</option>
+              </select>
+            </td>
+            <td><input type="number" class="lev-input" value="50" min="1" max="125" oninput="calculateAll()">x</td>
+            <td><input type="number" class="margin-input" value="200" min="1" oninput="calculateAll()"></td>
+            <td><input type="number" class="entry-input" value="0.9143" step="0.0001" oninput="calculateAll()"></td>
+            <td><span class="mark-price-disp">0.9143</span></td>
+            <td><span class="liq-price-disp text-red" style="font-weight:600;">-</span></td>
+            <td><span class="pnl-disp">0.00 USDT (0.0%)</span></td>
+            <td><button class="add-btn" onclick="removeRow(this)">삭제</button></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div style="margin-bottom: 24px;">
+      <button class="add-btn" onclick="addRow()" style="background: var(--accent-blue); padding: 8px 16px; font-weight: 600;">+ 모의 포지션 추가</button>
+    </div>
+
+    <!-- 하단 요약 카드 -->
+    <div class="summary-grid">
+      <div class="summary-item">
+        <span class="label">총 자본금</span>
+        <span class="val" id="sumTotalCap">₩10,000,000</span>
+      </div>
+      <div class="summary-item">
+        <span class="label">총 투자금 합계</span>
+        <span class="val" id="sumInvestAmt">₩0</span>
+      </div>
+      <div class="summary-item">
+        <span class="label">가상 증거금 잔액</span>
+        <span class="val" id="sumReserve" style="color: var(--accent-blue);">₩10,000,000</span>
+      </div>
+      <div class="summary-item">
+        <span class="label">시뮬레이션 상태</span>
+        <span class="val text-green" id="sumStatus">안전함 (Normal)</span>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    <p>UtilBox 개인 도구 모음 | Contact: utiibox@email.com</p>
+  </footer>
+
+  <script>
+    function calculateAll() {
+      const realCap = parseFloat(document.getElementById('realTotalCap').value) || 0;
+      const sliderVal = parseInt(document.getElementById('marketSlider').value) || 0;
+
+      // 슬라이더 텍스트 표시
+      document.getElementById('sliderValDisplay').innerText = sliderVal === 0 ? "0% (현재가)" : (sliderVal > 0 ? `+${sliderVal}% (가격 상승)` : `${sliderVal}% (가격 하락)`);
+
+      const rows = document.querySelectorAll('#positionTableBody tr');
+      let totalInvest = 0;
+      let totalPnLSum = 0;
+
+      rows.forEach(row => {
+        const positionType = row.querySelector('select').value; // long 또는 short
+        const lev = parseFloat(row.querySelector('.lev-input').value) || 1;
+        const investMargin = parseFloat(row.querySelector('.margin-input').value) || 0; // 투자 증거금
+        const entry = parseFloat(row.querySelector('.entry-input').value) || 0;
+
+        totalInvest += investMargin;
+
+        // 가상 Mark Price 계산 (슬라이더 변동률 반영)
+        const markPrice = entry * (1 + (sliderVal / 100));
+        row.querySelector('.mark-price-disp').innerText = markPrice > 1 ? markPrice.toFixed(4) : markPrice.toFixed(6);
+
+        // 청산가 계산 (간이 공식: 롱은 진입가 * (1 - 1/배율 + MMR), 숏은 진입가 * (1 + 1/배율 - MMR))
+        const mmr = 0.005; // 유지마진율 0.5% 가정
+        let liqPrice = 0;
+        if (positionType === 'long') {
+          liqPrice = entry * (1 - (1 / lev) + mmr);
+          if (liqPrice < 0) liqPrice = 0;
+        } else {
+          liqPrice = entry * (1 + (1 / lev) - mmr);
+        }
+        row.querySelector('.liq-price-disp').innerText = liqPrice > 1 ? liqPrice.toFixed(4) : liqPrice.toFixed(6);
+
+        // Floating PnL 계산 (수익금 = 투자금 * 배율 * 가격변동률)
+        let priceRatio = (markPrice - entry) / entry;
+        if (positionType === 'short') priceRatio = -priceRatio;
+
+        const pnlUsd = investMargin * lev * priceRatio;
+        const pnlPercent = priceRatio * lev * 100;
+        totalPnLSum += pnlUsd;
+
+        const pnlSpan = row.querySelector('.pnl-disp');
+        pnlSpan.innerText = `${pnlUsd >= 0 ? '+' : ''}${pnlUsd.toFixed(2)} USDT (${pnlPercent >= 0 ? '+' : ''}${pnlPercent.toFixed(1)}%)`;
+        pnlSpan.className = pnlSpan.className.replace(/text-green|text-red/g, '');
+        pnlSpan.classList.add(pnlUsd >= 0 ? 'text-green' : 'text-red');
+      });
+
+      // 총자본금 및 남은 증거금 연동
+      const currentReserve = realCap + totalPnLSum;
+      document.getElementById('sumTotalCap').innerText = '₩' + realCap.toLocaleString();
+      document.getElementById('sumInvestAmt').innerText = '$' + totalInvest.toLocaleString();
+      document.getElementById('remainMarginReserve').innerText = '₩' + Math.round(currentReserve).toLocaleString();
+      document.getElementById('sumReserve').innerText = '₩' + Math.round(currentReserve).toLocaleString();
+
+      const statusEl = document.getElementById('sumStatus');
+      if (currentReserve < realCap * 0.5) {
+        statusEl.innerText = "⚠️ 자산 반토막 위험!";
+        statusEl.className = "val text-red";
+      } else {
+        statusEl.innerText = "안전함 (Normal)";
+        statusEl.className = "val text-green";
+      }
+    }
+
+    function addRow() {
+      const tbody = document.getElementById('positionTableBody');
+      const newRow = document.createElement('tr');
+      newRow.innerHTML = `
+        <td><b>NEWUSDT</b></td>
+        <td>
+          <select onchange="calculateAll()">
+            <option value="long">Long (롱)</option>
+            <option value="short">Short (숏)</option>
+          </select>
+        </td>
+        <td><input type="number" class="lev-input" value="20" min="1" max="125" oninput="calculateAll()">x</td>
+        <td><input type="number" class="margin-input" value="50" min="1" oninput="calculateAll()"></td>
+        <td><input type="number" class="entry-input" value="1.000" step="0.001" oninput="calculateAll()"></td>
+        <td><span class="mark-price-disp">1.000</span></td>
+        <td><span class="liq-price-disp text-red" style="font-weight:600;">-</span></td>
+        <td><span class="pnl-disp">0.00 USDT (0.0%)</span></td>
+        <td><button class="add-btn" onclick="removeRow(this)">삭제</button></td>
+      `;
+      tbody.appendChild(newRow);
+      calculateAll();
+    }
+
+    function removeRow(btn) {
+      btn.closest('tr').remove();
+      calculateAll();
+    }
+
+    // 최초 실행
+    calculateAll();
+  </script>
+</body>
+</html>
