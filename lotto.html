@@ -317,13 +317,13 @@
       <!-- 2. 회차 범위 설정 및 합계 범위 설정 (한 줄 배치) -->
       <div class="settings-row">
         <div class="field" style="margin: 0;">
-          <label class="field-title">참고할 로또 당첨 회차 범위 설정</label>
+          <label class="field-title">참고할 로또 당첨 회차 범위 설정 <span id="auto-draw-notice" style="color: var(--primary); font-size: 11.5px; font-weight: normal;">(실시간 자동 계산됨)</span></label>
           <div class="range-box">
-            <input id="draw-start" type="number" value="1" min="1" max="1247" placeholder="시작 회차">
+            <input id="draw-start" type="number" value="1" min="1" placeholder="시작 회차">
             <span>~</span>
-            <input id="draw-end" type="number" value="1247" min="1" max="1247" placeholder="종료 회차">
+            <input id="draw-end" type="number" value="1250" min="1" placeholder="종료 회차">
           </div>
-          <div class="hint">지정한 회차 구간 내의 평균 개수를 실시간 분석합니다.</div>
+          <div class="hint">접속 날짜 기준으로 최신 회차가 자동으로 반영됩니다.</div>
         </div>
 
         <div class="field" style="margin: 0;">
@@ -509,6 +509,26 @@
   const $ = id => document.getElementById(id);
   let cachedResults = [];
 
+  // 🚀 [자동 회차 계산 함수] 2002년 12월 7일 (제1회 추첨일) 기준 현재 주차 계산
+  function getCurrentLatestDraw() {
+    const firstDrawDate = new Date(2002, 11, 7); // 월은 0부터 시작하므로 11 = 12월
+    const now = new Date();
+    
+    // 시차 및 일수 계산 (밀리초 단위를 일수로 환산)
+    const diffTime = now - firstDrawDate;
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+    
+    // 7일마다 1회씩 증가 (+1은 1회차 보정)
+    const calculatedDraw = Math.floor(diffDays / 7) + 1;
+    return Math.max(1, calculatedDraw);
+  }
+
+  // 페이지 로드 시 종료 회차 자동 설정 반영
+  const latestDraw = getCurrentLatestDraw();
+  $('draw-end').value = latestDraw;
+  $('draw-end').max = latestDraw;
+  $('auto-draw-notice').textContent = `(자동 계산됨: 제 ${latestDraw}회)`;
+
   const ballSettings = [
     { min: 1, max: 15, recMin: 1, recMax: 15 },
     { min: 3, max: 23, recMin: 3, recMax: 23 },
@@ -586,20 +606,17 @@
     const min = Number($('min').value) || 1;
     const max = Number($('max').value) || 45;
 
-    // 1. 개별 제외 번호 그리드 렌더링
     const excludeGrid = $('single-exclude-grid');
     const excludedValues = new Set();
     excludeGrid.querySelectorAll('.exclude-checkbox:checked').forEach(cb => excludedValues.add(Number(cb.value)));
     excludeGrid.replaceChildren();
 
-    // 2. 지참수 그리드 렌더링
     const fixGrid = $('single-fix-grid');
     const fixedValues = new Set();
     fixGrid.querySelectorAll('.fix-checkbox:checked').forEach(cb => fixedValues.add(Number(cb.value)));
     fixGrid.replaceChildren();
 
     for (let i = min; i <= max; i++) {
-      // 제외 번호 칩
       const exLabel = document.createElement('label');
       exLabel.className = 'num-pill exclude-pill';
       const exCb = document.createElement('input');
@@ -611,7 +628,6 @@
       exLabel.appendChild(document.createTextNode(i));
       excludeGrid.appendChild(exLabel);
 
-      // 지참수 칩
       const fixLabel = document.createElement('label');
       fixLabel.className = 'num-pill fix-pill';
       const fixCb = document.createElement('input');
@@ -784,14 +800,12 @@
 
       if (pos === k) {
         if (currentSum >= sumMin && currentSum <= sumMax) {
-          // 1. 지참수 필수 포함 여부 검증
           let passFixed = true;
           for (let f of fixedNumbers) {
             if (!current.includes(f)) { passFixed = false; break; }
           }
           if (!passFixed) return;
 
-          // 2. 유효 번호 연동 기준 커스텀 구간별 개수 제한 필터 검증
           let passGroupLimit = true;
           for (let g of customGroups) {
             if (g.limit !== '' && !isNaN(g.limit)) {
@@ -854,13 +868,11 @@
 
     const excludedSet = new Set();
 
-    // 1. 대역 일괄 제외 반영
     document.querySelectorAll('.range-exclude:checked').forEach(cb => {
       const [s, e] = cb.value.split('-').map(Number);
       for (let i = s; i <= e; i++) excludedSet.add(i);
     });
 
-    // 2. 개별 제외 번호 반영
     document.querySelectorAll('.exclude-checkbox:checked').forEach(cb => {
       excludedSet.add(Number(cb.value));
     });
@@ -882,7 +894,6 @@
       }
     }
 
-    // 살아있는 유효 번호 풀(Pool) 구성
     const pool = [];
     for (let i = min; i <= max; i++) {
       if (!excludedSet.has(i)) pool.push(i);
@@ -893,7 +904,6 @@
       return;
     }
 
-    // 3. 커스텀 구간과 유효 번호(Pool) 간의 사전 연동 유효성 검사
     for (let g of customGroups) {
       if (g.limit !== '' && !isNaN(g.limit)) {
         const validNumInGroup = pool.filter(n => n >= g.min && n <= g.max).length;
@@ -1000,7 +1010,7 @@
   });
 
   $('reset-single-fix').addEventListener('click', () => {
-    document.querySelectorAll('.fix-checkbox').forEach(cb => cb.checked = false);
+    document.querySelectorAll('.fix-checkbox').forEach(cb => cb.checked, false);
   });
 
   $('group-count-input').addEventListener('input', handleGroupCountChange);
