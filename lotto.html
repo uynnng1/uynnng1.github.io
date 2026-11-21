@@ -9,7 +9,1156 @@
   :root {
     --ink: #0f172a;
     --muted: #64748b;
+    --line: #e2e8f0<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>로또 무작위 조합기 | UtilBox</title>
+<meta name="description" content="실제 로또 당첨번호 데이터를 기반으로 구간별 평균 및 최소·최대 개수, 직접 개수 지정, 패턴 및 합계 Top 10 순위 분석, 회차 범위 합계 통계 및 지참수/제외 필터를 연동하는 로또 조합 도구입니다.">
+<style>
+  :root {
+    --ink: #0f172a;
+    --muted: #64748b;
     --line: #e2e8f0;
+    --primary: #2563eb;
+    --primary-hover: #1d4ed8;
+    --primary-light: #eff6ff;
+    --bg: #f8fafc;
+    --card-bg: #ffffff;
+    color-scheme: light;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 0 20px 40px; background: var(--bg);
+    color: var(--ink); font-family: Pretendard, "Malgun Gothic", sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 960px; margin: 0 auto; }
+  
+  /* Header */
+  .header {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 16px; flex-wrap: wrap; padding: 24px 0; border-bottom: 1px solid var(--line);
+    margin-bottom: 32px;
+  }
+  .brand {
+    font-size: 20px; font-weight: 800; color: var(--ink);
+    text-decoration: none; display: flex; align-items: center; gap: 10px;
+  }
+  .mark {
+    display: inline-flex; width: 38px; height: 38px;
+    align-items: center; justify-content: center; border-radius: 12px;
+    background: linear-gradient(135deg, var(--primary), #1d4ed8); color: white;
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
+  }
+  .nav { display: flex; gap: 8px; flex-wrap: wrap; }
+  .nav a {
+    color: var(--muted); text-decoration: none; padding: 8px 14px;
+    border-radius: 10px; font-size: 14px; font-weight: 600; transition: all .2s;
+  }
+  .nav a:hover { background: var(--line); color: var(--ink); }
+  .nav a.active { background: var(--primary-light); color: var(--primary); }
+
+  /* Main Container */
+  .container {
+    padding: 36px; background: var(--card-bg); border: 1px solid var(--line); border-radius: 24px;
+    box-shadow: 0 10px 30px -5px rgba(15, 23, 42, 0.04);
+  }
+  h1 { margin: 0 0 8px; font-size: 28px; font-weight: 800; letter-spacing: -0.02em; }
+  .subtitle { margin: 0 0 32px; color: var(--muted); font-size: 15px; line-height: 1.6; }
+  
+  /* Settings Grid */
+  .settings { display: grid; grid-template-columns: 1fr; gap: 20px; }
+  .field { 
+    padding: 20px; border: 1px solid var(--line); border-radius: 16px; 
+    background: #fbfcfd; transition: border-color .2s;
+  }
+  .field:focus-within { border-color: var(--primary); background: #fff; }
+  
+  label, .field-title { display: block; margin-bottom: 10px; font-weight: 700; font-size: 14px; color: var(--ink); }
+  .range-box { display: flex; gap: 12px; align-items: center; }
+  .range-box span { color: var(--muted); font-weight: 600; }
+  
+  input[type="number"], select {
+    width: 100%; padding: 12px 14px; border: 1px solid var(--line);
+    border-radius: 10px; font-size: 15px; background: #fff; color: var(--ink);
+    transition: all .2s; outline: none;
+  }
+  input[type="number"]:focus, select:focus {
+    border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+  }
+  .hint { margin-top: 8px; color: var(--muted); font-size: 12.5px; line-height: 1.5; }
+
+  .data-source-banner {
+    margin-top: 10px; padding: 8px 12px; border-radius: 8px;
+    font-size: 12px; font-weight: 600; background: #eff6ff; border: 1px solid #bfdbfe; color: #1d4ed8;
+  }
+
+  /* 회차 범위 내 합계 통계 요약 뱃지 */
+  .sum-stats-summary {
+    display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px;
+  }
+  .sum-stat-chip {
+    background: var(--primary-light); color: var(--primary); border: 1px solid #bfdbfe;
+    border-radius: 8px; padding: 5px 10px; font-size: 12px; font-weight: 700;
+  }
+  
+  /* Stat Info Box */
+  .stat-info {
+    padding: 18px; background: #f1f5f9; border-radius: 12px;
+    font-size: 13px; color: #334155; line-height: 1.6; border: 1px solid #e2e8f0; margin-top: 12px;
+  }
+  .stat-info .stat-head {
+    font-weight: 700; margin-bottom: 6px; padding-bottom: 6px; border-bottom: 1px dashed #cbd5e1;
+    color: var(--ink); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;
+  }
+
+  /* 구간별 평균 및 최소·최대 개수 카드 그리드 */
+  .group-avg-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(145px, 1fr)); gap: 8px; margin-top: 10px;
+  }
+  .group-avg-card {
+    background: #fff; border: 1px solid var(--line); border-radius: 10px; padding: 10px; text-align: center;
+  }
+  .group-avg-range { font-size: 11px; font-weight: 700; color: var(--muted); margin-bottom: 3px; }
+  .group-avg-val { font-size: 14px; font-weight: 800; color: var(--primary); }
+  .group-minmax-sub { font-size: 11px; font-weight: 600; color: #475569; margin-top: 2px; }
+
+  /* 빨간 글씨 구간 필터 안내 박스 */
+  .filter-note-box {
+    margin-top: 10px; padding: 10px 14px;
+    background: #fef2f2; border: 1px solid #fecaca; border-left: 4px solid #dc2626;
+    border-radius: 8px; color: #dc2626; font-size: 12.5px; font-weight: 700; line-height: 1.5;
+  }
+
+  /* 커스텀 구간 및 직접 개수 지정 영역 */
+  .custom-group-config {
+    margin: 12px 0; padding: 12px; background: #fff; border: 1px solid #e2e8f0; border-radius: 10px;
+  }
+  .custom-group-rows { display: grid; gap: 8px; margin-top: 8px; }
+  .custom-row-item {
+    display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: var(--muted); flex-wrap: wrap;
+  }
+  .custom-row-item input {
+    padding: 6px 8px; font-size: 13px; border: 1px solid var(--line); border-radius: 6px; text-align: center;
+  }
+  .step-btn {
+    width: 26px; height: 26px; border: 1px solid var(--line); background: #f8fafc;
+    border-radius: 6px; font-weight: 800; color: var(--ink); cursor: pointer;
+    display: inline-flex; align-items: center; justify-content: center; transition: all .15s;
+  }
+  .step-btn:hover { background: var(--primary-light); border-color: var(--primary); color: var(--primary); }
+  .clear-limit-btn {
+    border: 0; background: none; color: var(--muted); font-size: 11.5px; font-weight: 700; cursor: pointer;
+  }
+  .clear-limit-btn:hover { color: var(--primary); }
+
+  /* 2단 비교 레이아웃 (패턴 Top 10 & 합계 Top 10) */
+  .dual-rank-container {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 14px;
+  }
+  @media(max-width: 768px) {
+    .dual-rank-container { grid-template-columns: 1fr; }
+  }
+
+  .rank-box-panel {
+    background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 14px;
+  }
+  .rank-box-title {
+    display: flex; justify-content: space-between; align-items: center; gap: 6px; flex-wrap: wrap;
+    margin-bottom: 4px; font-size: 12.5px; font-weight: 700; color: var(--ink);
+  }
+  .rank-box-desc {
+    font-size: 11.5px; color: var(--muted); line-height: 1.45; margin-bottom: 10px;
+  }
+
+  .pattern-rank-grid {
+    display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; max-height: 240px; overflow-y: auto; padding-right: 2px;
+  }
+  .pattern-card {
+    background: #f8fafc; border: 1px solid var(--line); border-radius: 8px; padding: 8px; text-align: center;
+    cursor: pointer; transition: all .2s; position: relative; user-select: none;
+  }
+  .pattern-card:hover { border-color: var(--primary); background: #f0f7ff; }
+  .pattern-card.active { border-color: var(--primary); background: var(--primary-light); box-shadow: 0 0 0 1px var(--primary) inset; }
+  .pattern-rank-tag { font-size: 9.5px; font-weight: 800; color: var(--primary); background: var(--primary-light); padding: 1px 5px; border-radius: 4px; display: inline-block; margin-bottom: 2px; }
+  .pattern-name { font-size: 13px; font-weight: 800; color: var(--ink); }
+  .pattern-sub { font-size: 10.5px; color: var(--muted); margin-top: 1px; }
+
+  /* 2-Column Layout */
+  .settings-row {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 20px;
+  }
+
+  /* Range Pill Buttons */
+  .range-grid {
+    display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px;
+  }
+  .range-pill {
+    display: flex; align-items: center; justify-content: center;
+    padding: 10px; border: 1px solid var(--line); border-radius: 10px;
+    background: #fff; font-size: 13.5px; font-weight: 600; color: var(--muted);
+    cursor: pointer; transition: all .2s; user-select: none; text-align: center;
+  }
+  .range-pill input { display: none; }
+  .range-pill:hover { border-color: #cbd5e1; background: #f8fafc; color: var(--ink); }
+  .range-pill:has(input:checked) {
+    background: var(--primary-light);
+    border-color: var(--primary);
+    color: var(--primary);
+    box-shadow: 0 0 0 1px var(--primary) inset;
+  }
+
+  /* 개별 번호 바둑판형 체크 박스 그리드 */
+  .num-grid {
+    display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px;
+    max-height: 220px; overflow-y: auto; padding: 4px 2px;
+  }
+  .num-pill {
+    display: flex; align-items: center; justify-content: center;
+    height: 36px; border: 1px solid var(--line); border-radius: 8px;
+    background: #fff; font-size: 13px; font-weight: 700; color: #475569;
+    cursor: pointer; transition: all .15s; user-select: none;
+  }
+  .num-pill input { display: none; }
+  .num-pill:hover { border-color: #cbd5e1; background: #f8fafc; color: var(--ink); }
+  
+  .exclude-pill:has(input:checked) {
+    background: #ef4444; border-color: #dc2626; color: #ffffff;
+    box-shadow: 0 2px 6px rgba(239, 68, 68, 0.25);
+  }
+  .fix-pill:has(input:checked) {
+    background: #10b981; border-color: #059669; color: #ffffff;
+    box-shadow: 0 2px 6px rgba(16, 185, 129, 0.25);
+  }
+
+  /* Action & Disclaimer Box */
+  .actions { margin-top: 24px; display: flex; flex-direction: column; gap: 10px; }
+  .disclaimer-box {
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+    background: #fdf2f8; border: 1px solid #fbcfe8; border-radius: 10px;
+    padding: 10px 16px; font-size: 13px; font-weight: 600; color: #db2777; text-align: center;
+  }
+
+  button.action-btn {
+    border: 0; border-radius: 12px; padding: 14px 20px; font-size: 16px;
+    font-weight: 700; cursor: pointer; transition: all .2s; width: 100%;
+  }
+  .primary { 
+    color: white; background: var(--primary); 
+    box-shadow: 0 4px 14px rgba(37, 99, 235, 0.3);
+  }
+  .primary:hover { background: var(--primary-hover); transform: translateY(-1px); }
+  
+  .secondary { 
+    color: var(--primary); background: var(--primary-light); 
+    border: 1px solid #bfdbfe; margin-top: 10px;
+  }
+  .secondary:hover { background: #dbeafe; }
+
+  /* Result Panel */
+  .result-panel { 
+    margin-top: 32px; padding: 24px; background: #f8fafc; 
+    border: 1px solid var(--line); border-radius: 16px; 
+  }
+  .result-head { 
+    display: flex; justify-content: space-between; align-items: center; 
+    gap: 12px; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid var(--line);
+  }
+  .result-head h2 { margin: 0; font-size: 17px; font-weight: 700; }
+  #status { color: var(--primary); font-size: 13.5px; font-weight: 700; background: var(--primary-light); padding: 4px 10px; border-radius: 20px; }
+  
+  .result-list { display: grid; gap: 10px; max-height: 520px; overflow-y: auto; padding-right: 4px; }
+  .result-row { 
+    display: flex; align-items: center; gap: 10px; flex-wrap: wrap; 
+    padding: 12px 16px; background: white; border: 1px solid var(--line); 
+    border-radius: 12px; transition: box-shadow .15s;
+  }
+  .result-row:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
+  .set-label { min-width: 36px; color: var(--muted); font-size: 12px; font-weight: 700; }
+  
+  .number {
+    display: inline-flex; align-items: center; justify-content: center;
+    min-width: 36px; height: 36px; padding: 0 8px; border-radius: 10px;
+    color: var(--primary); background: var(--primary-light); font-weight: 800; 
+    font-size: 14px; font-variant-numeric: tabular-nums;
+    box-shadow: inset 0 0 0 1px rgba(37, 99, 235, 0.1);
+  }
+  .sum-badge {
+    margin-left: auto; font-size: 12.5px; font-weight: 700; color: var(--muted);
+    background: #f1f5f9; padding: 4px 10px; border-radius: 8px;
+  }
+  
+  .empty { color: var(--muted); text-align: center; padding: 24px 0; font-size: 14px; line-height: 1.6; }
+  .note { margin: 20px 0 0; color: var(--muted); font-size: 12.5px; line-height: 1.6; text-align: center; }
+
+  @media(max-width: 768px) {
+    .container { padding: 20px; }
+    body { padding: 0 10px 20px; }
+    .settings-row { grid-template-columns: 1fr; }
+    .sum-badge { margin-left: 0; width: 100%; text-align: right; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="header">
+    <a class="brand" href="index.html">
+      <span class="mark">U</span>
+      <span>UtilBox</span>
+    </a>
+    <nav class="nav" aria-label="주 메뉴">
+      <a href="index.html">홈</a>
+      <a href="generator.html">숫자 조합 생성기</a>
+      <a class="active" href="lotto.html">로또 무작위 조합기</a>
+      <a href="calc.html">선물거래 시뮬레이터</a>
+    </nav>
+  </header>
+
+  <main class="container">
+    <h1>🎰 로또 무작위 조합기</h1>
+    <p class="subtitle">실제 로또 당첨번호 데이터를 기반으로 구간별 평균·최소·최대 개수, 직접 개수 조절, 패턴 및 합계 Top 10 순위 분석, 회차 범위 합계 통계 및 지참수/제외 필터를 연동합니다.</p>
+
+    <div class="settings" aria-label="생성 설정">
+      <!-- 1. 회차 범위 및 합계 범위 설정 -->
+      <div class="settings-row">
+        <div class="field" style="margin: 0;">
+          <label class="field-title">참고할 로또 당첨 회차 범위 설정 <span id="auto-draw-notice" style="color: var(--primary); font-size: 11.5px; font-weight: normal;">(최대 제 1250회)</span></label>
+          <div class="range-box">
+            <input id="draw-start" type="number" value="1208" min="1" max="1250" placeholder="시작 회차">
+            <span>~</span>
+            <input id="draw-end" type="number" value="1250" min="1" max="1250" placeholder="종료 회차">
+          </div>
+          <div class="data-source-banner" id="data-source-status">실제 당첨번호 데이터 기준 (1208~1250회 내장 · draws.json 추가 시 자동 병합)</div>
+          <div class="sum-stats-summary" id="draw-sum-summary">
+            <span class="sum-stat-chip" id="stat-min-sum">최소 합계: -</span>
+            <span class="sum-stat-chip" id="stat-max-sum">최대 합계: -</span>
+            <span class="sum-stat-chip" id="stat-avg-sum">평균 합계: -</span>
+          </div>
+        </div>
+
+        <div class="field" style="margin: 0;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+            <label class="field-title" style="margin: 0;">추출 숫자의 합계 범위 직접 설정</label>
+            <button type="button" class="clear-limit-btn" id="clear-sum-selection">구간 선택 해제 ↺</button>
+          </div>
+          <div class="range-box">
+            <input id="sum-min" type="number" value="105" placeholder="합계 최솟값">
+            <span>~</span>
+            <input id="sum-max" type="number" value="170" placeholder="합계 최댓값">
+          </div>
+          <div class="hint">직접 숫자를 입력하거나, 아래 '합계 구간 순위 Top 10'에서 원하는 구간 카드를 선택해 필터링할 수 있습니다.</div>
+        </div>
+      </div>
+
+      <!-- 2. 사용자 정의 구간, 구간별 평균·최소·최대 개수, 직접 개수 지정 및 Top 10 비교 박스 -->
+      <div class="field">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 10px;">
+          <label class="field-title" style="margin: 0;">⚙️ 구간 설정 / 평균·최소·최대 및 직접 개수 지정</label>
+          
+          <label class="range-pill" style="padding: 6px 12px; font-size: 12.5px; border-radius: 8px; margin: 0;">
+            <input type="checkbox" id="include-bonus"> <span>보너스 번호(2등) 포함 분석</span>
+          </label>
+        </div>
+        
+        <div class="stat-info" style="margin-top: 0;">
+          <div class="stat-head">
+            <span>구간별 평균·최소·최대 개수 확인 및 뽑을 개수 직접 지정 (+/- 또는 숫자 입력)</span>
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <button type="button" class="clear-limit-btn" id="clear-group-limits">개수 지정 초기화 ↺</button>
+              <div style="display: flex; align-items: center; gap: 6px;">
+                <span style="font-size: 12px; color: var(--muted);">구간 개수:</span>
+                <input id="group-count-input" type="number" value="3" min="1" max="4" style="width: 50px; padding: 4px; text-align: center; font-size: 12px;">
+              </div>
+            </div>
+          </div>
+
+          <!-- 구간별 평균 및 최소·최대 개수 카드 -->
+          <div class="group-avg-grid" id="group-avg-container">
+            <!-- 자바스크립트 동적 생성 -->
+          </div>
+
+          <!-- 빨간 글씨 구간 필터 안내 문구 -->
+          <div class="filter-note-box">
+            구간 개수를 정하는 것은 별도 필터 기준입니다. 당첨에 다가가는것이 아닌 경우를 줄이는것이라 당첨에 멀어지기도 합니다 당신의 선택입니다
+          </div>
+
+          <!-- 사용자가 직접 구간 범위 및 뽑을 개수를 조절하는 행 -->
+          <div class="custom-group-config">
+            <div class="custom-group-rows" id="custom-group-rows-container">
+              <!-- 자바스크립트 동적 생성 -->
+            </div>
+            <div class="hint" style="margin-top: 6px;">💡 개수를 직접 입력하거나 <strong>- / +</strong> 버튼을 눌러 지정할 수 있습니다. (비워두면 해당 구간 제한 없음)</div>
+          </div>
+
+          <!-- 2단 비교 레이아웃: 좌측 패턴 Top 10 / 우측 합계 Top 10 -->
+          <div class="dual-rank-container">
+            <!-- 좌측: 패턴 순위 Top 10 -->
+            <div class="rank-box-panel">
+              <div class="rank-box-title">
+                <span>📊 구간 패턴 순위 Top 10</span>
+                <span id="pattern-selected-count" style="color: var(--primary); font-size: 11px;">미선택 (전체)</span>
+              </div>
+              <div class="rank-box-desc">설정한 각 번호 구간에 당첨 번호가 몇 개씩 분포했는지 출현 빈도 순위입니다. 누르면 개수가 반영됩니다.</div>
+              <div class="pattern-rank-grid" id="pattern-rank-container">
+                <!-- 자바스크립트 동적 생성 -->
+              </div>
+            </div>
+
+            <!-- 우측: 합계 구간 순위 Top 10 -->
+            <div class="rank-box-panel">
+              <div class="rank-box-title">
+                <span>📈 합계 구간 순위 Top 10 (10단위)</span>
+                <span id="sum-selected-count" style="color: var(--primary); font-size: 11px;">미선택 (전체)</span>
+              </div>
+              <div class="rank-box-desc">회차별 6개 번호 총합이 어느 10단위 구간에 자주 들었는지 순위입니다. 누르면 합계 구간이 선택됩니다.</div>
+              <div class="pattern-rank-grid" id="sum-rank-container">
+                <!-- 자바스크립트 동적 생성 -->
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 3. 제외 설정 및 지참수 설정 (좌우 배치) -->
+      <div class="settings-row">
+        <!-- 좌측: 대역 일괄 제외 + 개별 번호 제외 -->
+        <div class="field" style="margin: 0; display: flex; flex-direction: column; gap: 16px;">
+          <div>
+            <label class="field-title">구간별 대역 일괄 제외</label>
+            <div class="range-grid">
+              <label class="range-pill"><input type="checkbox" class="range-exclude" value="1-9">1~9구간</label>
+              <label class="range-pill"><input type="checkbox" class="range-exclude" value="10-19">10~19구간</label>
+              <label class="range-pill"><input type="checkbox" class="range-exclude" value="20-29">20~29구간</label>
+              <label class="range-pill"><input type="checkbox" class="range-exclude" value="30-39">30~39구간</label>
+              <label class="range-pill" style="grid-column: span 2;"><input type="checkbox" class="range-exclude" value="40-45">40~45구간</label>
+            </div>
+          </div>
+
+          <div>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+              <label class="field-title" style="margin: 0;">개별 번호 클릭 제외</label>
+              <button id="reset-single-exclude" style="background: none; border: 0; color: var(--muted); font-size: 11.5px; font-weight: 700; cursor: pointer; padding: 0;">초기화 ↺</button>
+            </div>
+            <div class="num-grid" id="single-exclude-grid"></div>
+            <div class="hint" style="margin-top: 6px;">제외할 특정 번호를 클릭하여 빨간색으로 선택합니다.</div>
+          </div>
+        </div>
+
+        <!-- 우측: 지참수 (꼭 들고 갈 번호) -->
+        <div class="field" style="margin: 0; display: flex; flex-direction: column;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+            <label class="field-title" style="margin: 0;">🍀 지참수 (꼭 들고 갈 번호)</label>
+            <button id="reset-single-fix" style="background: none; border: 0; color: var(--muted); font-size: 11.5px; font-weight: 700; cursor: pointer; padding: 0;">초기화 ↺</button>
+          </div>
+          <div class="num-grid" id="single-fix-grid" style="max-height: 380px;"></div>
+          <div class="hint" style="margin-top: 6px;">조합에 반드시 포함시킬 지참 번호를 클릭하여 초록색으로 선택합니다.</div>
+        </div>
+      </div>
+
+      <!-- 4. 출력 옵션 -->
+      <div class="field">
+        <label class="field-title">출력 옵션</label>
+        <div>
+          <label for="sort-order" style="font-size: 13px; font-weight: 600; margin-bottom: 6px; display: block;">결과 정렬 방식</label>
+          <select id="sort-order">
+            <option value="asc">작은 수부터 (오름차순)</option>
+            <option value="desc">큰 수부터 (내림차순)</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="actions">
+      <div class="disclaimer-box">
+        <span>💡 과도한 몰입보다는 가벼운 취미와 소소한 즐거움으로만 가볍게 즐겨주세요!</span>
+      </div>
+      <button class="action-btn primary" id="generate">로또 경우의 수 분석 및 생성</button>
+    </div>
+
+    <div class="result-panel" aria-live="polite">
+      <div class="result-head">
+        <h2>생성 결과</h2>
+        <span id="status">대기 중</span>
+      </div>
+      <div id="action-area" style="margin-bottom: 10px; display: none;">
+        <button class="action-btn secondary" id="show-results">✨ 조건 만족 결과 일렬로 펼쳐보기</button>
+      </div>
+      <div id="results" class="result-list"><div class="empty">위의 버튼을 눌러 설정한 합계 범위와 지참수/제외 조건에 맞는 로또 조합을 분석해 보세요.</div></div>
+    </div>
+    <p class="note">💡 조건에 맞는 경우의 수가 1,000개를 초과할 경우 안전한 출력을 위해 일렬 보기가 제한됩니다.</p>
+  </main>
+</div>
+
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const DATA_JSON_URL = 'draws.json';
+
+  // 실제 로또 당첨번호 데이터 (1208회~1250회 확인 내역)
+  const ACTUAL_DRAWS = [
+    { draw: 1208, nums: [6, 27, 30, 36, 38, 42], bonus: 25 },
+    { draw: 1209, nums: [2, 17, 20, 35, 37, 39], bonus: 24 },
+    { draw: 1210, nums: [1, 7, 9, 17, 27, 38], bonus: 31 },
+    { draw: 1211, nums: [23, 26, 27, 35, 38, 40], bonus: 10 },
+    { draw: 1212, nums: [5, 8, 25, 31, 41, 44], bonus: 45 },
+    { draw: 1213, nums: [5, 11, 25, 27, 36, 38], bonus: 2 },
+    { draw: 1214, nums: [10, 15, 19, 27, 30, 33], bonus: 14 },
+    { draw: 1215, nums: [13, 15, 19, 21, 44, 45], bonus: 39 },
+    { draw: 1216, nums: [3, 10, 14, 15, 23, 24], bonus: 25 },
+    { draw: 1217, nums: [8, 10, 15, 20, 29, 31], bonus: 41 },
+    { draw: 1218, nums: [3, 28, 31, 32, 42, 45], bonus: 25 },
+    { draw: 1219, nums: [1, 2, 15, 28, 39, 45], bonus: 31 },
+    { draw: 1220, nums: [2, 22, 25, 28, 34, 43], bonus: 16 },
+    { draw: 1221, nums: [6, 13, 18, 28, 30, 36], bonus: 9 },
+    { draw: 1222, nums: [4, 11, 17, 22, 32, 41], bonus: 34 },
+    { draw: 1223, nums: [16, 18, 20, 32, 33, 39], bonus: 26 },
+    { draw: 1224, nums: [9, 18, 21, 27, 44, 45], bonus: 28 },
+    { draw: 1225, nums: [8, 9, 19, 25, 41, 42], bonus: 33 },
+    { draw: 1226, nums: [4, 6, 13, 17, 26, 28], bonus: 41 },
+    { draw: 1227, nums: [1, 14, 16, 34, 41, 44], bonus: 13 },
+    { draw: 1228, nums: [24, 29, 30, 31, 35, 44], bonus: 1 },
+    { draw: 1229, nums: [12, 13, 29, 34, 37, 42], bonus: 16 },
+    { draw: 1230, nums: [3, 8, 9, 22, 28, 42], bonus: 45 },
+    { draw: 1231, nums: [4, 13, 14, 18, 31, 38], bonus: 15 },
+    { draw: 1232, nums: [12, 15, 19, 22, 24, 36], bonus: 3 },
+    { draw: 1233, nums: [2, 7, 20, 25, 37, 40], bonus: 29 },
+    { draw: 1234, nums: [1, 15, 19, 31, 35, 43], bonus: 27 },
+    { draw: 1235, nums: [6, 7, 11, 15, 39, 43], bonus: 20 },
+    { draw: 1236, nums: [12, 18, 21, 29, 34, 38], bonus: 10 },
+    { draw: 1237, nums: [10, 20, 23, 34, 37, 40], bonus: 36 },
+    { draw: 1238, nums: [2, 13, 18, 32, 38, 42], bonus: 22 },
+    { draw: 1239, nums: [11, 13, 22, 32, 33, 36], bonus: 8 },
+    { draw: 1240, nums: [11, 13, 19, 20, 31, 44], bonus: 27 },
+    { draw: 1241, nums: [7, 13, 16, 23, 24, 43], bonus: 9 },
+    { draw: 1242, nums: [2, 4, 10, 16, 31, 41], bonus: 9 },
+    { draw: 1243, nums: [9, 18, 24, 38, 43, 44], bonus: 35 },
+    { draw: 1244, nums: [1, 13, 18, 26, 34, 38], bonus: 25 },
+    { draw: 1245, nums: [4, 5, 25, 28, 32, 42], bonus: 12 },
+    { draw: 1246, nums: [16, 22, 23, 24, 27, 28], bonus: 6 },
+    { draw: 1247, nums: [8, 14, 21, 22, 42, 45], bonus: 24 },
+    { draw: 1248, nums: [16, 18, 27, 36, 38, 42], bonus: 22 },
+    { draw: 1249, nums: [2, 11, 16, 25, 34, 35], bonus: 14 },
+    { draw: 1250, nums: [1, 5, 18, 23, 27, 28], bonus: 8 }
+  ];
+
+  let cachedResults = [];
+  let selectedPatterns = new Set();
+  let selectedSumRanges = new Set();
+
+  let drawMap = new Map();
+  let maxAvailableDraw = 1250;
+
+  let customGroups = [
+    { min: 1, max: 15, limit: '' },
+    { min: 16, max: 30, limit: '' },
+    { min: 31, max: 45, limit: '' }
+  ];
+
+  function addDrawsToMap(targetMap, raw) {
+    const list = Array.isArray(raw)
+      ? raw
+      : (raw && typeof raw === 'object'
+          ? Object.entries(raw).map(([k, v]) => ({ draw: Number(k), ...(v || {}) }))
+          : []);
+
+    list.forEach(item => {
+      if (!item) return;
+      const drawNo = Number(item.draw ?? item.drawNo ?? item.round ?? item.drwNo);
+      const rawNums = item.nums ?? item.numbers ?? item.winNums ?? [];
+      if (!Number.isInteger(drawNo) || drawNo < 1 || !Array.isArray(rawNums) || rawNums.length !== 6) return;
+      const nums = rawNums.map(Number).filter(n => Number.isInteger(n) && n >= 1 && n <= 45);
+      if (new Set(nums).size !== 6) return;
+      nums.sort((a, b) => a - b);
+      const bonusVal = Number(item.bonus ?? item.bnusNo ?? 0);
+      const bonus = Number.isInteger(bonusVal) && bonusVal >= 1 && bonusVal <= 45 ? bonusVal : null;
+      targetMap.set(drawNo, { nums, bonus });
+    });
+  }
+
+  function initBuiltInDraws() {
+    drawMap = new Map();
+    addDrawsToMap(drawMap, ACTUAL_DRAWS);
+    maxAvailableDraw = Math.max(...drawMap.keys());
+    $('draw-end').max = maxAvailableDraw;
+    $('draw-end').value = maxAvailableDraw;
+    $('auto-draw-notice').textContent = `(최대 제 ${maxAvailableDraw}회)`;
+  }
+
+  async function tryMergeExternalJson() {
+    try {
+      const res = await fetch(DATA_JSON_URL, { cache: 'no-store' });
+      if (!res.ok) return;
+      const json = await res.json();
+      const beforeSize = drawMap.size;
+      addDrawsToMap(drawMap, json);
+      if (drawMap.size > 0) {
+        maxAvailableDraw = Math.max(...drawMap.keys());
+        $('draw-end').max = maxAvailableDraw;
+        if (Number($('draw-end').value) < maxAvailableDraw) {
+          $('draw-end').value = maxAvailableDraw;
+        }
+        $('auto-draw-notice').textContent = `(최대 제 ${maxAvailableDraw}회)`;
+        $('data-source-status').textContent = `실제 당첨번호 기준 (총 ${drawMap.size}개 회차 반영 · draws.json 연동됨, 추가 ${Math.max(0, drawMap.size - beforeSize)}건)`;
+        updateDrawStats();
+      }
+    } catch (_) {
+      // 외부 draws.json이 없어도 내장 실제 데이터로 정상 동작
+    }
+  }
+
+  function resetStatsDisplay(message) {
+    $('stat-min-sum').textContent = '최소 합계: -';
+    $('stat-max-sum').textContent = '최대 합계: -';
+    $('stat-avg-sum').textContent = '평균 합계: -';
+
+    const avgContainer = $('group-avg-container');
+    avgContainer.replaceChildren();
+    customGroups.forEach((g, idx) => {
+      const card = document.createElement('div');
+      card.className = 'group-avg-card';
+      card.innerHTML = `
+        <div class="group-avg-range">구간 ${idx + 1} (${g.min}~${g.max})</div>
+        <div class="group-avg-val">평균 -</div>
+        <div class="group-minmax-sub">${message || '데이터 없음'}</div>
+      `;
+      avgContainer.appendChild(card);
+    });
+
+    $('pattern-rank-container').innerHTML = `<div class="empty" style="grid-column: span 2; padding: 14px 0; font-size: 12px;">${message || '표시할 패턴 데이터가 없습니다.'}</div>`;
+    $('sum-rank-container').innerHTML = `<div class="empty" style="grid-column: span 2; padding: 14px 0; font-size: 12px;">${message || '표시할 합계 데이터가 없습니다.'}</div>`;
+  }
+
+  function syncSumRangeInputsFromSelection() {
+    if (selectedSumRanges.size === 0) return;
+    let minVal = Infinity;
+    let maxVal = -Infinity;
+    selectedSumRanges.forEach(key => {
+      const [sMin, sMax] = key.split('-').map(Number);
+      if (sMin < minVal) minVal = sMin;
+      if (sMax > maxVal) maxVal = sMax;
+    });
+    if (minVal !== Infinity && maxVal !== -Infinity) {
+      $('sum-min').value = minVal;
+      $('sum-max').value = maxVal;
+    }
+  }
+
+  function renderCustomGroupInputs() {
+    const container = $('custom-group-rows-container');
+    container.replaceChildren();
+
+    customGroups.forEach((g, idx) => {
+      const row = document.createElement('div');
+      row.className = 'custom-row-item';
+      row.innerHTML = `
+        <span style="min-width: 48px; color: var(--ink);">구간 ${idx + 1}</span>
+        <input type="number" class="cg-min" data-idx="${idx}" value="${g.min}" min="1" max="45" style="width: 62px;">
+        <span>~</span>
+        <input type="number" class="cg-max" data-idx="${idx}" value="${g.max}" min="1" max="45" style="width: 62px;">
+        <span style="margin-left: 8px; color: var(--ink); font-size: 12px;">개수:</span>
+        <button type="button" class="step-btn dec-btn" data-idx="${idx}" title="1 감소">-</button>
+        <input type="number" class="cg-limit" data-idx="${idx}" value="${g.limit}" min="0" max="6" placeholder="자유" style="width: 54px;">
+        <button type="button" class="step-btn inc-btn" data-idx="${idx}" title="1 증가">+</button>
+        <span style="font-size: 11.5px; color: var(--muted);">개</span>
+      `;
+      container.appendChild(row);
+    });
+
+    container.querySelectorAll('input').forEach(input => {
+      input.addEventListener('input', (e) => {
+        const idx = Number(e.target.dataset.idx);
+        const rawVal = e.target.value;
+        if (e.target.classList.contains('cg-min')) {
+          const val = Number(rawVal);
+          if (!isNaN(val)) {
+            customGroups[idx].min = val;
+            selectedPatterns.clear();
+            updateDrawStats();
+          }
+        } else if (e.target.classList.contains('cg-max')) {
+          const val = Number(rawVal);
+          if (!isNaN(val)) {
+            customGroups[idx].max = val;
+            selectedPatterns.clear();
+            updateDrawStats();
+          }
+        } else if (e.target.classList.contains('cg-limit')) {
+          if (rawVal === '') {
+            customGroups[idx].limit = '';
+          } else {
+            let v = Number(rawVal);
+            if (!isNaN(v)) {
+              v = Math.max(0, Math.min(6, v));
+              customGroups[idx].limit = v;
+            }
+          }
+        }
+      });
+    });
+
+    container.querySelectorAll('.dec-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const idx = Number(e.target.dataset.idx);
+        let cur = customGroups[idx].limit === '' ? 1 : Number(customGroups[idx].limit);
+        cur = Math.max(0, cur - 1);
+        customGroups[idx].limit = cur;
+        renderCustomGroupInputs();
+      });
+    });
+
+    container.querySelectorAll('.inc-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const idx = Number(e.target.dataset.idx);
+        let cur = customGroups[idx].limit === '' ? -1 : Number(customGroups[idx].limit);
+        cur = Math.min(6, cur + 1);
+        customGroups[idx].limit = cur;
+        renderCustomGroupInputs();
+      });
+    });
+  }
+
+  function handleGroupCountChange() {
+    let count = Number($('group-count-input').value) || 3;
+    if (count < 1) count = 1;
+    if (count > 4) count = 4;
+
+    const newGroups = [];
+    const step = Math.floor(45 / count);
+    for (let i = 0; i < count; i++) {
+      const start = i * step + 1;
+      const end = (i === count - 1) ? 45 : (i + 1) * step;
+      if (customGroups[i]) {
+        newGroups.push(customGroups[i]);
+      } else {
+        newGroups.push({ min: start, max: end, limit: '' });
+      }
+    }
+    customGroups = newGroups;
+    selectedPatterns.clear();
+    renderCustomGroupInputs();
+    updateDrawStats();
+  }
+
+  function updateDrawStats() {
+    const startDraw = Math.max(1, Number($('draw-start').value) || 1);
+    const endDraw = Math.max(1, Number($('draw-end').value) || maxAvailableDraw);
+    const includeBonus = $('include-bonus').checked;
+
+    const rangeDraws = [];
+    for (let d = Math.min(startDraw, endDraw); d <= Math.max(startDraw, endDraw); d++) {
+      if (drawMap.has(d)) {
+        rangeDraws.push({ draw: d, ...drawMap.get(d) });
+      }
+    }
+
+    if (rangeDraws.length === 0) {
+      resetStatsDisplay('해당 회차 데이터 없음');
+      renderNumberGrids();
+      return;
+    }
+
+    const totalDraws = rangeDraws.length;
+    const patternCounts = {};
+    const sumRangeCounts = {};
+    const groupTotalCounts = customGroups.map(() => 0);
+    const groupMinCounts = customGroups.map(() => Infinity);
+    const groupMaxCounts = customGroups.map(() => -Infinity);
+
+    let minSum = Infinity;
+    let minSumDraw = null;
+    let maxSum = -Infinity;
+    let maxSumDraw = null;
+    let totalSum = 0;
+
+    rangeDraws.forEach(drawData => {
+      const dSum = drawData.nums.reduce((a, b) => a + b, 0);
+      if (dSum < minSum) {
+        minSum = dSum;
+        minSumDraw = drawData.draw;
+      }
+      if (dSum > maxSum) {
+        maxSum = dSum;
+        maxSumDraw = drawData.draw;
+      }
+      totalSum += dSum;
+
+      const sumMinRange = Math.floor(dSum / 10) * 10;
+      const sumMaxRange = sumMinRange + 10;
+      const sumKey = `${sumMinRange}-${sumMaxRange}`;
+      sumRangeCounts[sumKey] = (sumRangeCounts[sumKey] || 0) + 1;
+
+      const targetNums = [...drawData.nums];
+      if (includeBonus && drawData.bonus != null) targetNums.push(drawData.bonus);
+
+      const counts = customGroups.map((g, idx) => {
+        let cnt = 0;
+        targetNums.forEach(n => {
+          if (n >= g.min && n <= g.max) cnt++;
+        });
+        groupTotalCounts[idx] += cnt;
+        if (cnt < groupMinCounts[idx]) groupMinCounts[idx] = cnt;
+        if (cnt > groupMaxCounts[idx]) groupMaxCounts[idx] = cnt;
+        return cnt;
+      });
+      const pKey = counts.join('-');
+      patternCounts[pKey] = (patternCounts[pKey] || 0) + 1;
+    });
+
+    const avgSum = (totalSum / totalDraws).toFixed(1);
+    $('stat-min-sum').textContent = minSum === Infinity ? '최소 합계: -' : `최소 합계: ${minSum} (${minSumDraw}회)`;
+    $('stat-max-sum').textContent = maxSum === -Infinity ? '최대 합계: -' : `최대 합계: ${maxSum} (${maxSumDraw}회)`;
+    $('stat-avg-sum').textContent = `평균 합계: ${avgSum} (${totalDraws}회 기준)`;
+
+    const avgContainer = $('group-avg-container');
+    avgContainer.replaceChildren();
+    customGroups.forEach((g, idx) => {
+      const avgCount = (groupTotalCounts[idx] / totalDraws).toFixed(2);
+      const minC = groupMinCounts[idx] === Infinity ? 0 : groupMinCounts[idx];
+      const maxC = groupMaxCounts[idx] === -Infinity ? 0 : groupMaxCounts[idx];
+      const card = document.createElement('div');
+      card.className = 'group-avg-card';
+      card.innerHTML = `
+        <div class="group-avg-range">구간 ${idx + 1} (${g.min}~${g.max})</div>
+        <div class="group-avg-val">평균 ${avgCount}개</div>
+        <div class="group-minmax-sub">최소 ${minC}개 ~ 최대 ${maxC}개</div>
+      `;
+      avgContainer.appendChild(card);
+    });
+
+    const sortedPatterns = Object.entries(patternCounts).map(([key, count]) => {
+      const realPct = ((count / totalDraws) * 100).toFixed(1);
+      const name = includeBonus ? `${key} (보너스포함)` : key.split('-').join(' - ');
+      return { key, name, count, pct: realPct };
+    }).sort((a, b) => b.count - a.count).slice(0, 10);
+
+    const sortedSums = Object.entries(sumRangeCounts).map(([key, count]) => {
+      const [sMin, sMax] = key.split('-').map(Number);
+      const realPct = ((count / totalDraws) * 100).toFixed(1);
+      return { key, sMin, sMax, name: `${sMin}~${sMax}점`, count, pct: realPct };
+    }).sort((a, b) => b.count - a.count).slice(0, 10);
+
+    const pContainer = $('pattern-rank-container');
+    pContainer.replaceChildren();
+    sortedPatterns.forEach((item, idx) => {
+      const card = document.createElement('div');
+      card.className = `pattern-card ${selectedPatterns.has(item.key) ? 'active' : ''}`;
+      card.innerHTML = `
+        <span class="pattern-rank-tag">${idx + 1}위</span>
+        <div class="pattern-name">${item.name}</div>
+        <div class="pattern-sub">${item.count}회 (${item.pct}%)</div>
+      `;
+      card.addEventListener('click', () => {
+        if (selectedPatterns.has(item.key)) {
+          selectedPatterns.delete(item.key);
+          card.classList.remove('active');
+        } else {
+          selectedPatterns.add(item.key);
+          card.classList.add('active');
+          const parts = item.key.split('-').map(Number);
+          parts.forEach((numVal, i) => {
+            if (customGroups[i]) {
+              customGroups[i].limit = Math.min(6, numVal);
+            }
+          });
+          renderCustomGroupInputs();
+        }
+        $('pattern-selected-count').textContent = selectedPatterns.size === 0 ? '미선택 (전체)' : `${selectedPatterns.size}개 선택됨`;
+      });
+      pContainer.appendChild(card);
+    });
+
+    const sContainer = $('sum-rank-container');
+    sContainer.replaceChildren();
+    sortedSums.forEach((item, idx) => {
+      const card = document.createElement('div');
+      card.className = `pattern-card ${selectedSumRanges.has(item.key) ? 'active' : ''}`;
+      card.innerHTML = `
+        <span class="pattern-rank-tag">${idx + 1}위</span>
+        <div class="pattern-name">${item.name}</div>
+        <div class="pattern-sub">${item.count}회 (${item.pct}%)</div>
+      `;
+      card.addEventListener('click', () => {
+        if (selectedSumRanges.has(item.key)) {
+          selectedSumRanges.delete(item.key);
+          card.classList.remove('active');
+        } else {
+          selectedSumRanges.add(item.key);
+          card.classList.add('active');
+        }
+        syncSumRangeInputsFromSelection();
+        $('sum-selected-count').textContent = selectedSumRanges.size === 0 ? '미선택 (전체)' : `${selectedSumRanges.size}개 구간 선택됨`;
+      });
+      sContainer.appendChild(card);
+    });
+
+    renderNumberGrids();
+  }
+
+  function renderNumberGrids() {
+    const excludeGrid = $('single-exclude-grid');
+    const excludedValues = new Set();
+    excludeGrid.querySelectorAll('.exclude-checkbox:checked').forEach(cb => excludedValues.add(Number(cb.value)));
+    excludeGrid.replaceChildren();
+
+    const fixGrid = $('single-fix-grid');
+    const fixedValues = new Set();
+    fixGrid.querySelectorAll('.fix-checkbox:checked').forEach(cb => fixedValues.add(Number(cb.value)));
+    fixGrid.replaceChildren();
+
+    for (let i = 1; i <= 45; i++) {
+      const exLabel = document.createElement('label');
+      exLabel.className = 'num-pill exclude-pill';
+      const exCb = document.createElement('input');
+      exCb.type = 'checkbox';
+      exCb.className = 'exclude-checkbox';
+      exCb.value = i;
+      if (excludedValues.has(i)) exCb.checked = true;
+      exLabel.appendChild(exCb);
+      exLabel.appendChild(document.createTextNode(i));
+      excludeGrid.appendChild(exLabel);
+
+      const fixLabel = document.createElement('label');
+      fixLabel.className = 'num-pill fix-pill';
+      const fixCb = document.createElement('input');
+      fixCb.type = 'checkbox';
+      fixCb.className = 'fix-checkbox';
+      fixCb.value = i;
+      if (fixedValues.has(i)) fixCb.checked = true;
+      fixLabel.appendChild(fixCb);
+      fixLabel.appendChild(document.createTextNode(i));
+      fixGrid.appendChild(fixLabel);
+    }
+  }
+
+  function getCombinations(arr, sumMin, sumMax, fixedNumbers) {
+    const result = [];
+
+    function backtrack(start, current, currentSum) {
+      if (current.length === 6) {
+        if (currentSum >= sumMin && currentSum <= sumMax) {
+          for (let f of fixedNumbers) {
+            if (!current.includes(f)) return;
+          }
+
+          if (selectedSumRanges.size > 0) {
+            let passSumRange = false;
+            for (let rKey of selectedSumRanges) {
+              const [sMin, sMax] = rKey.split('-').map(Number);
+              if (currentSum >= sMin && currentSum <= sMax) {
+                passSumRange = true;
+                break;
+              }
+            }
+            if (!passSumRange) return;
+          }
+
+          let passGroupLimit = true;
+          for (let g of customGroups) {
+            if (g.limit !== '' && !isNaN(g.limit)) {
+              let cnt = 0;
+              current.forEach(n => {
+                if (n >= g.min && n <= g.max) cnt++;
+              });
+              if (cnt !== Number(g.limit)) {
+                passGroupLimit = false;
+                break;
+              }
+            }
+          }
+          if (!passGroupLimit) return;
+
+          result.push({ nums: [...current], sum: currentSum });
+        }
+        return;
+      }
+
+      for (let i = start; i < arr.length; i++) {
+        const val = arr[i];
+        if (currentSum + val > sumMax) continue;
+        current.push(val);
+        backtrack(i + 1, current, currentSum + val);
+        current.pop();
+      }
+    }
+
+    backtrack(0, [], 0);
+    return result;
+  }
+
+  function getZeroReason(sumMin, sumMax, excludedSet, fixedList) {
+    const specifiedLimits = customGroups.filter(g => g.limit !== '' && !isNaN(g.limit));
+    if (specifiedLimits.length > 0) {
+      const limitSum = specifiedLimits.reduce((acc, g) => acc + Number(g.limit), 0);
+      if (limitSum !== 6) {
+        return `구간 지정 개수 합이 ${limitSum}개라 6개 조합을 만들 수 없음`;
+      }
+    }
+
+    const conflictNums = fixedList.filter(n => excludedSet.has(n));
+    if (conflictNums.length > 0) {
+      return `지참수와 제외수가 겹침 (${conflictNums.join(', ')})`;
+    }
+
+    if (fixedList.length > 0) {
+      const fixedSum = fixedList.reduce((a, b) => a + b, 0);
+      if (fixedSum > sumMax) {
+        return `지참수 합계(${fixedSum})가 최대 합계(${sumMax})를 넘음`;
+      }
+    }
+
+    const reversedGroups = customGroups
+      .map((g, idx) => ({ ...g, idx: idx + 1 }))
+      .filter(g => Number(g.min) > Number(g.max));
+    if (reversedGroups.length > 0) {
+      return `구간 시작값이 끝값보다 큼`;
+    }
+
+    return `설정한 조건이 서로 겹치는 조합이 없음`;
+  }
+
+  function handleGenerate() {
+    const sumMin = Number($('sum-min').value);
+    const sumMax = Number($('sum-max').value);
+    const sortOrder = $('sort-order').value;
+
+    if (sumMin > sumMax) { alert('합계 최솟값은 최댓값보다 클 수 없습니다.'); return; }
+
+    const excludedSet = new Set();
+    document.querySelectorAll('.range-exclude:checked').forEach(cb => {
+      const [s, e] = cb.value.split('-').map(Number);
+      for (let i = s; i <= e; i++) excludedSet.add(i);
+    });
+    document.querySelectorAll('.exclude-checkbox:checked').forEach(cb => excludedSet.add(Number(cb.value)));
+
+    const fixedList = [];
+    document.querySelectorAll('.fix-checkbox:checked').forEach(cb => fixedList.push(Number(cb.value)));
+
+    if (fixedList.length > 6) {
+      alert('지참수 개수가 6개를 초과할 수 없습니다.'); return;
+    }
+
+    const pool = [];
+    for (let i = 1; i <= 45; i++) {
+      if (!excludedSet.has(i)) pool.push(i);
+    }
+
+    const rawResults = getCombinations(pool, sumMin, sumMax, fixedList);
+    const totalCases = rawResults.length;
+    $('action-area').style.display = 'none';
+
+    if (totalCases === 0) {
+      $('status').textContent = `조건 충족 조합: 0가지`;
+      const results = $('results');
+      results.replaceChildren();
+      const reason = getZeroReason(sumMin, sumMax, excludedSet, fixedList);
+      const msg = document.createElement('div');
+      msg.className = 'empty';
+      msg.textContent = `조건에 부합하지 않습니다 (${reason})`;
+      results.appendChild(msg);
+      cachedResults = [];
+      return;
+    }
+
+    if (totalCases > 1000) {
+      $('status').textContent = `조건 충족 조합: ${totalCases.toLocaleString()}가지`;
+      const results = $('results');
+      results.replaceChildren();
+      const msg = document.createElement('div');
+      msg.className = 'empty';
+      msg.innerHTML = `조건 만족 조합 총 <strong>${totalCases.toLocaleString()}가지</strong>.<br><span style="color: #dc2626;">⚠️ 1,000개 초과로 일렬 보기가 제한됩니다. 구간별 개수를 정하거나 조건을 더 좁혀주세요.</span>`;
+      results.appendChild(msg);
+      cachedResults = [];
+      return;
+    }
+
+    cachedResults = rawResults.map(item => {
+      const sorted = [...item.nums];
+      if (sortOrder === 'asc') sorted.sort((a, b) => a - b);
+      else sorted.sort((a, b) => b - a);
+      return { nums: sorted, sum: item.sum };
+    });
+
+    $('status').textContent = `조건 충족 조합: ${totalCases.toLocaleString()}가지`;
+    $('action-area').style.display = 'block';
+
+    const results = $('results');
+    results.replaceChildren();
+    const info = document.createElement('div');
+    info.className = 'empty';
+    info.textContent = "상단의 '조건 만족 결과 일렬로 펼쳐보기' 버튼을 누르면 아래로 조합이 펼쳐집니다.";
+    results.appendChild(info);
+  }
+
+  function handleShowResults() {
+    const results = $('results');
+    results.replaceChildren();
+    if (cachedResults.length === 0) return;
+
+    cachedResults.forEach((item, index) => {
+      const row = document.createElement('div');
+      row.className = 'result-row';
+      
+      const label = document.createElement('span');
+      label.className = 'set-label';
+      label.textContent = `#${index + 1}`;
+      row.appendChild(label);
+      
+      item.nums.forEach(n => {
+        const ball = document.createElement('span');
+        ball.className = 'number';
+        ball.textContent = String(n);
+        row.appendChild(ball);
+      });
+
+      const sumBadge = document.createElement('span');
+      sumBadge.className = 'sum-badge';
+      sumBadge.textContent = `합계: ${item.sum}`;
+      row.appendChild(sumBadge);
+
+      results.appendChild(row);
+    });
+
+    $('status').textContent = `${cachedResults.length.toLocaleString()}개 출력 완료`;
+  }
+
+  $('clear-sum-selection').addEventListener('click', () => {
+    selectedSumRanges.clear();
+    $('sum-selected-count').textContent = '미선택 (전체)';
+    document.querySelectorAll('#sum-rank-container .pattern-card').forEach(c => c.classList.remove('active'));
+  });
+
+  $('clear-group-limits').addEventListener('click', () => {
+    customGroups.forEach(g => g.limit = '');
+    selectedPatterns.clear();
+    $('pattern-selected-count').textContent = '미선택 (전체)';
+    document.querySelectorAll('#pattern-rank-container .pattern-card').forEach(c => c.classList.remove('active'));
+    renderCustomGroupInputs();
+  });
+
+  $('reset-single-exclude').addEventListener('click', () => {
+    document.querySelectorAll('.exclude-checkbox').forEach(cb => cb.checked = false);
+  });
+  $('reset-single-fix').addEventListener('click', () => {
+    document.querySelectorAll('.fix-checkbox').forEach(cb => cb.checked = false);
+  });
+
+  $('group-count-input').addEventListener('input', handleGroupCountChange);
+  $('include-bonus').addEventListener('change', updateDrawStats);
+  $('generate').addEventListener('click', handleGenerate);
+  $('show-results').addEventListener('click', handleShowResults);
+  $('draw-start').addEventListener('input', updateDrawStats);
+  $('draw-end').addEventListener('input', updateDrawStats);
+
+  renderCustomGroupInputs();
+  initBuiltInDraws();
+  updateDrawStats();
+  tryMergeExternalJson();
+})();
+</script>
+</body>
+</html>;
     --primary: #2563eb;
     --primary-hover: #1d4ed8;
     --primary-light: #eff6ff;
